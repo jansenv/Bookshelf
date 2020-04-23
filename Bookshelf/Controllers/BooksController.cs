@@ -30,7 +30,13 @@ namespace Bookshelf.Controllers
         // GET: Books
         public async Task<ActionResult> Index()
         {
-            return View();
+            var user = await GetCurrentUserAsync();
+            var books = await _context.Books
+                .Where(book => book.ApplicationUserId == user.Id)
+                .Include(book => book.BookGenres)
+                    .ThenInclude(bg => bg.Genre)
+                .ToListAsync();
+            return View(books);
         }
 
         // GET: Books/Details/5
@@ -113,25 +119,39 @@ namespace Bookshelf.Controllers
         {
             try
             {
-                var user = await GetCurrentUserAsync();
-                
-                var book = new Book()
-                {
-                    Id = id,
-                    Title = bookViewModel.Title,
-                    Author = bookViewModel.Author,
-                };
+                var bookDataModel = await _context.Books.Include(b => b.BookGenres).FirstOrDefaultAsync(b => b.Id == id);
 
-                book.BookGenres = bookViewModel.SelectGenreIds.Select(genreId => new BookGenre()
+                bookDataModel.Title = bookViewModel.Title;
+                bookDataModel.Author = bookViewModel.Author;
+                bookDataModel.BookGenres.Clear();
+                bookDataModel.BookGenres = bookViewModel.SelectGenreIds.Select(genreId => new BookGenre()
                 {
-                    Book = book,
+                    BookId = bookDataModel.Id,
                     GenreId = genreId
                 }).ToList();
 
-                book.ApplicationUserId = user.Id;
-
-                _context.Books.Update(book);
+                _context.Books.Update(bookDataModel);
                 await _context.SaveChangesAsync();
+
+                //var user = await GetCurrentUserAsync();
+                
+                //var book = new Book()
+                //{
+                //    Id = id,
+                //    Title = bookViewModel.Title,
+                //    Author = bookViewModel.Author,
+                //};
+
+                //book.BookGenres = bookViewModel.SelectGenreIds.Select(genreId => new BookGenre()
+                //{
+                //    Book = book,
+                //    GenreId = genreId
+                //}).ToList();
+
+                //book.ApplicationUserId = user.Id;
+
+                //_context.Books.Update(book);
+                //await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
