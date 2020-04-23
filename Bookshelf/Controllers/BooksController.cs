@@ -96,6 +96,11 @@ namespace Bookshelf.Controllers
         // GET: Books/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
+            
+            var book = await _context.Books.Include(b => b.BookGenres).FirstOrDefaultAsync(b => b.Id == id);
+
+            var viewModel = new BookFormViewModel();
+
             var genreOptions = await _context
                 .Genres.Select(g => new SelectListItem()
                 {
@@ -103,11 +108,11 @@ namespace Bookshelf.Controllers
                     Value = g.Id.ToString()
                 }).ToListAsync();
 
-            var book = _context.Books.FirstOrDefaultAsync(b => b.Id == id);
-
-            var viewModel = new BookFormViewModel();
-
+            viewModel.Id = id;
+            viewModel.Title = book.Title;
+            viewModel.Author = book.Author;
             viewModel.GenreOptions = genreOptions;
+            viewModel.SelectGenreIds = book.BookGenres.Select(bg => bg.GenreId).ToList();
 
             return View(viewModel);
         }
