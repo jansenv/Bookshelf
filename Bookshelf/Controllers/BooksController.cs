@@ -90,19 +90,20 @@ namespace Bookshelf.Controllers
         // GET: Books/Edit/5
         public async Task<ActionResult> Edit(int id)
         {
-            //var viewModel = new BookFormViewModel();
-            //var book = await _context.BookGenres.FirstOrDefaultAsync(b => b.Id == id)
-            //var genreOptions = await _context
-            //    .Genres.Select(g => new SelectListItem()
-            //    {
-            //        Text = g.Name,
-            //        Value = g.Id.ToString()
-            //    }).ToListAsync();
+            var genreOptions = await _context
+                .Genres.Select(g => new SelectListItem()
+                {
+                    Text = g.Name,
+                    Value = g.Id.ToString()
+                }).ToListAsync();
 
-            //_context.BookGenres.Add(book);
-            //await _context.SaveChangesAsync();
+            var book = _context.Books.FirstOrDefaultAsync(b => b.Id == id);
 
-            return View();
+            var viewModel = new BookFormViewModel();
+
+            viewModel.GenreOptions = genreOptions;
+
+            return View(viewModel);
         }
 
         // POST: Books/Edit/5
