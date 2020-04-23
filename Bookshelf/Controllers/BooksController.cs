@@ -131,7 +131,7 @@ namespace Bookshelf.Controllers
                 bookDataModel.BookGenres.Clear();
                 bookDataModel.BookGenres = bookViewModel.SelectGenreIds.Select(genreId => new BookGenre()
                 {
-                    BookId = bookDataModel.Id,
+                    Book = bookDataModel,
                     GenreId = genreId
                 }).ToList();
 
@@ -169,17 +169,27 @@ namespace Bookshelf.Controllers
         // GET: Books/Delete/5
         public async Task<ActionResult> Delete(int id)
         {
-            return View();
+            var book = await _context.Books.Include(b => b.BookGenres).FirstOrDefaultAsync(item => item.Id == id);
+
+            var loggedInUser = await GetCurrentUserAsync();
+
+            if (book.ApplicationUserId != loggedInUser.Id)
+            {
+                return NotFound();
+            }
+
+            return View(book);
         }
 
         // POST: Books/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> Delete(int id, Book book)
         {
             try
             {
-                // TODO: Add delete logic here
+                _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
