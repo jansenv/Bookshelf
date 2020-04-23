@@ -109,11 +109,29 @@ namespace Bookshelf.Controllers
         // POST: Books/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, IFormCollection collection)
+        public async Task<ActionResult> Edit(int id, BookFormViewModel bookViewModel)
         {
             try
             {
-                // TODO: Add update logic here
+                var user = await GetCurrentUserAsync();
+                
+                var book = new Book()
+                {
+                    Id = id,
+                    Title = bookViewModel.Title,
+                    Author = bookViewModel.Author,
+                };
+
+                book.BookGenres = bookViewModel.SelectGenreIds.Select(genreId => new BookGenre()
+                {
+                    Book = book,
+                    GenreId = genreId
+                }).ToList();
+
+                book.ApplicationUserId = user.Id;
+
+                _context.Books.Update(book);
+                await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
